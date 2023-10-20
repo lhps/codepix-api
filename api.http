@@ -1,1 +1,13 @@
 GET http://localhost:3000/bank-accounts
+
+###
+GET http://localhost:3000/bank-accounts/9322dad3-3278-48af-b740-329f9c8a1ca5
+
+###
+POST http://localhost:3000/bank-accounts
+Content-Type: application/json
+
+{
+  "account_number": "1111-1",
+  "owner_name": "Lucas Henrique"
+}
