@@ -1,0 +1,9 @@
+{
+  "name": "Imersão Full Cycle 15 - Nest.js",
+
+  "service": "app",
+  workspaceFolder: "/home/node/app",
+  dockerComposeFile: [
+    "../docker-compose.yaml"
+  ]
+}

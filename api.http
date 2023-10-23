@@ -1,7 +1,7 @@
 GET http://localhost:3000/bank-accounts
 
 ###
-GET http://localhost:3000/bank-accounts/9322dad3-3278-48af-b740-329f9c8a1ca5
+GET http://localhost:3000/bank-accounts/7e936b04-aea8-4e72-9170-c6bd7a2fb6ee
 
 ###
 POST http://localhost:3000/bank-accounts

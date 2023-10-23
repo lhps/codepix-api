@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BankAccountsModule } from './bank-accounts/bank-accounts.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PixKeysModule } from './pix-keys/pix-keys.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       synchronize: true,
     }),
     BankAccountsModule,
+    PixKeysModule,
   ],
   controllers: [AppController],
   providers: [AppService],
