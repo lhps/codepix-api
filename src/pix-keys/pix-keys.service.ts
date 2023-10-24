@@ -1,27 +1,81 @@
-import { Injectable } from '@nestjs/common';
+import {Inject, Injectable, OnModuleInit} from '@nestjs/common';
 import { CreatePixKeyDto } from './dto/create-pix-key.dto';
 import {Repository} from 'typeorm';
-import {PixKey} from "./entities/pix-key.entity";
+import {PixKey, PixKeyKind} from "./entities/pix-key.entity";
 import {InjectRepository} from "@nestjs/typeorm";
 import {BankAccount} from "../bank-accounts/entities/bank-account.entity";
+import {ClientGrpc} from "@nestjs/microservices";
+import {PixKeyClientGrpc, RegisterPixKeyRpcResponse} from "./pix-keys.grpc";
+import {lastValueFrom} from "rxjs";
 
 @Injectable()
-export class PixKeysService {
+export class PixKeysService implements OnModuleInit {
+
+  private pixGrpcService: PixKeyClientGrpc;
 
   constructor(
       @InjectRepository(PixKey) private pixKeyRepo: Repository<PixKey>,
-      @InjectRepository(BankAccount) private bankAccountRepo: Repository<BankAccount>
+      @InjectRepository(BankAccount) private bankAccountRepo: Repository<BankAccount>,
+      @Inject('PIX_PACKAGE')
+      private pixGrpcPackage: ClientGrpc
   ) {}
+
+  onModuleInit(): any {
+    this.pixGrpcService = this.pixGrpcPackage.getService('PixService')
+  }
 
   async create(bankAccountId: string, createPixKeyDto: CreatePixKeyDto) {
     await this.bankAccountRepo.findOneOrFail({ where: { id: bankAccountId } });
 
-    // TODO: logica para consultar se a chave pix existe no banco central (grpc)
+    const remotePixKey = await this.findRemotePixKey(createPixKeyDto);
 
-    return this.pixKeyRepo.save({
-      bank_account_id: bankAccountId,
-      ...createPixKeyDto
-    });
+
+    if (remotePixKey) {
+      return this.createIfNotExists(bankAccountId, remotePixKey)
+    } else {
+      const createdRemotePixKey = await lastValueFrom(this.pixGrpcService.registerPixKey({
+        ...createPixKeyDto,
+        accountId: bankAccountId
+      }));
+
+      // se existir local, apenas atualiza
+      return this.pixKeyRepo.save({
+        id: createdRemotePixKey.id,
+        bank_account_id: bankAccountId,
+        ...createPixKeyDto
+      });
+    }
+  }
+
+  private async findRemotePixKey(data: { key: string; kind: string}): Promise<RegisterPixKeyRpcResponse | null> {
+    try {
+      return await lastValueFrom(this.pixGrpcService.find(data));
+    } catch (e) {
+      if (e.details == 'No key was found') {
+        return null;
+      }
+
+      throw new PixKeyGrpcUnknownError('Grpc Internal Error')
+    }
+  }
+
+  private async createIfNotExists(bankAccountId: string, remotePixKey: RegisterPixKeyRpcResponse) {
+      const hasLocalPixKey = await this.pixKeyRepo.exist({
+        where: {
+          key: remotePixKey.key
+        }
+      })
+
+    if (hasLocalPixKey) {
+      throw new PixKeyAlreadyExistsError("Pix Key already exists");
+    } else {
+      return this.pixKeyRepo.save({
+        id: remotePixKey.id,
+        bank_account_id: bankAccountId,
+        key: remotePixKey.key,
+        kind: remotePixKey.kind as PixKeyKind
+      });
+    }
   }
 
   findAll(bankAccountId: string) {
@@ -46,4 +100,9 @@ export class PixKeysService {
   // remove(id: number) {
   //   return `This action removes a #${id} pixKey`;
   // }
+}
+
+export class PixKeyGrpcUnknownError extends Error {
+}
+export class PixKeyAlreadyExistsError extends Error {
 }

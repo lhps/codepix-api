@@ -1,7 +1,9 @@
 GET http://localhost:3000/bank-accounts
 
+#@bank_account_id = 7e936b04-aea8-4e72-9170-c6bd7a2fb6ee
+
 ###
-GET http://localhost:3000/bank-accounts/7e936b04-aea8-4e72-9170-c6bd7a2fb6ee
+GET http://localhost:3000/bank-accounts/{{bank_account_id}}
 
 ###
 POST http://localhost:3000/bank-accounts
@@ -11,3 +13,19 @@ Content-Type: application/json
   "account_number": "1111-1",
   "owner_name": "Lucas Henrique"
 }
+
+###
+GET http://localhost:3000/bank-accounts/{{bank_account_id}}/pix-keys
+
+
+###
+POST http://localhost:3000/bank-accounts/{{bank_account_id}}/pix-keys
+Content-Type: application/json
+
+{
+  "kind": "email",
+  "key": "user@email.com"
+}
+
+###
+GET http://localhost:3000/bank-accounts/{{bank_account_id}}/pix-keys

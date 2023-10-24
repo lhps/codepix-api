@@ -1,7 +1,5 @@
-import {Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn} from "typeorm";
+import {Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, JoinColumn} from "typeorm";
 import {BankAccount} from "../../bank-accounts/entities/bank-account.entity";
-import {JoinColumn} from "typeorm/browser";
-
 
 export enum PixKeyKind {
     cpf = 'cpf',
